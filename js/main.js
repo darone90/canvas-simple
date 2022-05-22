@@ -29,6 +29,43 @@ class Sky {
         this.ctx.fillRect(0, 0, this.width, this.height)
     }
 
+    generateStars(count) {
+        const stars = [];
+
+        for (let i = 0; i < count; i++) {
+            const radius = Math.random() * 3 + 2;
+            stars.push({
+                x: Math.random() * this.width,
+                y: Math.random() * this.height,
+                radius,
+                color: '#fff',
+                speed: (Math.random() + 0.01) / 10,
+            })
+        }
+
+        this.stars = stars;
+    }
+
+    updateStars() {
+        this.stars.forEach(star => {
+            star.x += star.speed;
+            if (star.x > this.width + 2 * star.radius) {
+                star.x = -2 * star.radius;
+            }
+        });
+    }
+
+    clearCanvas() {
+        this.ctx.fillStyle = '#000';
+        this.ctx.fillRect(0, 0, this.width, this.height);
+    }
+
+    drawStars() {
+        this.stars.forEach(star => {
+            this.drawStar(star)
+        })
+    }
+
     drawStar(star) {
         this.ctx.save()
         this.ctx.fillStyle = star.color;
@@ -43,22 +80,20 @@ class Sky {
             this.ctx.lineTo(0, 0 - star.radius)
         }
         this.ctx.fill();
-        // this.ctx.restore()
+        this.ctx.restore()
     }
 
     draw() {
-        window.requestAnimationFrame(() => this.draw())
+        this.clearCanvas();
+        this.drawStars();
+        this.updateStars();
+        window.requestAnimationFrame(() => this.draw());
     }
 
     run() {
         this.initCanvas();
-        // this.draw();
-        this.drawStar({
-            x: 100,
-            y: 100,
-            color: '#fff',
-            radius: 50,
-        })
+        this.generateStars(500);
+        this.draw();
     }
 }
 
