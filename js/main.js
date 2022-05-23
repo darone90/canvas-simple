@@ -15,10 +15,17 @@ const canvas = document.querySelector('#canvas');
 
 class Sky {
     constructor(canvas) {
-        this.canvas = canvas
+        this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
         this.width = window.innerWidth;
         this.height = window.innerHeight;
+        this.lastConstellation = 0;
+        this.nextConstellation = Math.random() * 3000;
+        this.constellation = {
+            stars: [],
+            isClosed: false,
+            width: null,
+        }
     }
 
     initCanvas() {
@@ -40,7 +47,7 @@ class Sky {
                 radius,
                 orginalRadius: radius,
                 color: '#fff',
-                speed: (Math.random() + 0.01) / 5,
+                speed: (Math.random() + 0.01) / 2,
             })
         }
 
@@ -66,6 +73,61 @@ class Sky {
                 star.x = -2 * star.radius;
             }
         });
+    }
+
+    updateConstellation() {
+        if (this.constellation.width > 0) {
+            this.constellation.width -= 0.05;
+        } else this.constellation.width = 0;
+    }
+
+    generateRandomConstellation() {
+        const x = (this.width / 2) + Math.random() * 0.8 * this.width - this.width / 2;
+        const y = (this.height / 2) + Math.random() * 0.8 * this.height - this.height / 2;
+        const radius = (this.height / 2) * Math.random() * 0.5 + 0.5;
+
+        this.constellation = {
+            stars: this.stars.filter(star => {
+                return star.x > x - radius &&
+                    star.x < x + radius &&
+                    star.y > y - radius &&
+                    star.y < y + radius;
+            }).slice(0, Math.round(Math.random() * 7 + 3)),
+            isClosed: Math.random() > 0.5,
+            width: 5,
+        }
+    }
+
+    drawConstellation() {
+        const {
+            stars,
+            isClosed,
+            width
+        } = this.constellation;
+        const strasCount = stars.length;
+
+        if (strasCount > 2) {
+
+            const firstStar = stars[0];
+
+            this.ctx.beginPath();
+            this.ctx.moveTo(firstStar.x, firstStar.y);
+            this.ctx.lineTo(stars[1].x, stars[1].y);
+
+            for (let i = 1; i < strasCount - 1; i++) {
+                const nextStar = stars[i + 1];
+                this.ctx.lineTo(nextStar.x, nextStar.y);
+            }
+
+            if (isClosed) {
+                this.ctx.lineTo(firstStar.x, firstStar.y);
+            }
+
+            this.ctx.strokeStyle = "#f7eada";
+            this.ctx.lineWidth = width;
+            this.ctx.stroke();
+        }
+
     }
 
     clearCanvas() {
@@ -96,18 +158,27 @@ class Sky {
         this.ctx.restore()
     }
 
-    draw() {
+    draw(now) {
         this.clearCanvas();
         this.drawStars();
         this.updateStars();
+        this.drawConstellation();
+        this.updateConstellation();
         this.drawOverlayer();
-        window.requestAnimationFrame(() => this.draw());
+if (now - this.lastConstellation > this.nextConstellation) {
+    this.lastConstellation = now;
+    this.nextConstellation = Math.random() * 1000 + 2000;
+    this.generateRandomConstellation();
+
+}
+
+window.requestAnimationFrame((now) => this.draw(now));
     }
 
     run() {
         this.initCanvas();
         this.generateStars(500);
-        this.draw();
+        this.draw(0);
     }
 }
 
